@@ -29,7 +29,7 @@ const auth = new Elysia()
 
         if (existingUser.length > 0) {
           set.status = 400;
-          return { error: "Email already registered" };
+          return { success: false, error: "Email already registered" };
         }
 
         // 2. Hash the password
@@ -42,7 +42,7 @@ const auth = new Elysia()
           .values({
             name,
             email,
-            password: hashedPassword, 
+            password: hashedPassword,
             role,
           })
           .returning();
@@ -53,7 +53,7 @@ const auth = new Elysia()
         };
       } catch (error) {
         set.status = 500;
-        return { error: "Internal Server Error" };
+        return { success: false, error: "Internal Server Error" };
       }
     },
     {
@@ -73,7 +73,7 @@ const auth = new Elysia()
   )
   .post(
     "/auth/login",
-    async ({ body, jwt, set }) => {
+    async ({ body, jwt, set, cookie:{token} }) => {
       const { email, password } = body;
       // Find user
       const [user] = await db
@@ -95,19 +95,21 @@ const auth = new Elysia()
       }
 
       // Generate JWT with User Info (Role-Based)
-      const token = await jwt.sign({
+      const jwtToken = await jwt.sign({
         id: user.id,
         role: user.role,
       });
-
+      token.set({
+        value: jwtToken,
+        httpOnly: true, // JS cannot access it (XSS protection)
+        secure: true, // HTTPS only in production
+        sameSite: "lax", // CSRF protection
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        path: "/",
+      });
       return {
         success: true,
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          role: user.role,
-        },
+        message:"Sucessfully Verified "
       };
     },
     {
@@ -116,7 +118,6 @@ const auth = new Elysia()
         password: t.String(),
       }),
     },
-  )
-  
-export {auth}
+  );
 
+export { auth };
