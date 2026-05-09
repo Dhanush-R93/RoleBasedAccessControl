@@ -118,6 +118,10 @@ const auth = new Elysia()
         password: t.String(),
       }),
     },
-  );
+  )
+  .post('/auth/logout', ({ cookie: { token }, set }) => {
+    token.remove(); 
+    return { success: true, message: "Logged out" };
+  })
 
 export { auth };

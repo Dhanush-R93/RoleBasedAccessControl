@@ -3,6 +3,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/server/client";
+import { useRouter } from "next/navigation";
 const userSchema = z.object({
   email: z.string().email(),
   password: z
@@ -15,7 +16,7 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
-
+ const router=useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const {success,data:formDataResult,error}=userSchema.safeParse(formData);
@@ -40,7 +41,7 @@ export default function LoginPage() {
                });
              }
              console.log(data);
-             
+             router.push("/dashboard")
              toast.success(`Successfully Loggined`, {
                position: "top-center",
                style: { color: "green" },
